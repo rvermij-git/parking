@@ -1,0 +1,26 @@
+name: Reserveer parkeerplek automatisch
+
+on:
+  schedule:
+    - cron: '1 0 * * 1,4'
+  workflow_dispatch:
+
+jobs:
+  reserveer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Installeer dependencies
+        run: |
+          pip install --upgrade pip
+          pip install playwright
+          playwright install
+
+      - name: Voer script uit
+        env:
+          PARKING_EMAIL: ${{ secrets.PARKING_EMAIL }}
+          PARKING_PASSWORD: ${{ secrets.PARKING_PASSWORD }}
+          PARKING_BLOCK: ${{ secrets.PARKING_BLOCK }}
+          PARKING_LOCATION: ${{ secrets.PARKING_LOCATION }}
+        run: python reservering.py
