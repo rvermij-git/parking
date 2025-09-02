@@ -14,8 +14,7 @@ jobs:
       - name: Installeer dependencies
         run: |
           pip install --upgrade pip
-          pip install playwright
-          playwright install
+          pip install -r requirements.txt
 
       - name: Voer script uit
         env:
