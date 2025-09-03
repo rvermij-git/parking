@@ -2,7 +2,7 @@ name: Reserveer parkeerplek automatisch
 
 on:
   schedule:
-    - cron: '*/5 * * * 1,2,3,4'
+    - cron: '* * * * *'
   workflow_dispatch:
 
 jobs:
