@@ -1,6 +1,9 @@
 import os
 import requests
 from bs4 import BeautifulSoup
+from datetime import date, timedelta
+
+reservation_date = (date.today() + timedelta(days=7)).isoformat()
 
 BASE_URL = "https://thegrid.parkingportal.app"
 
@@ -35,7 +38,7 @@ with requests.Session() as s:
 
     # Stap 3: reservering proberen
     params = {
-        "reservation_date": "2025-09-05",  # <-- later dynamisch maken!
+        "reservation_date": reservation_date,  
         "reservation_block_settings": block,
         "location": location,
     }
