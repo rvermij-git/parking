@@ -1,49 +1,51 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-from datetime import date, timedelta
+
+BASE_URL = "https://thegrid.parkingportal.app"
 
 email = os.getenv("PARKING_EMAIL")
 password = os.getenv("PARKING_PASSWORD")
 block = os.getenv("PARKING_BLOCK")
 location = os.getenv("PARKING_LOCATION")
 
-login_url = "https://thegrid.parkingportal.app/nl/login/"
-reserve_url = "https://thegrid.parkingportal.app/nl/reservations/make/"
-
-target_date = date.today() + timedelta(weeks=1)
+login_url = f"{BASE_URL}/nl/login/?next=/nl/reservations/"
+reserve_url = f"{BASE_URL}/nl/reservations/make/"
 
 with requests.Session() as s:
-    # 1. Loginpagina ophalen (cookie + token krijgen)
-    r = s.get(login_url)
-    r.raise_for_status()
+    # Stap 1: loginpagina ophalen voor CSRF
+    resp = s.get(login_url)
+    print("Login page status:", resp.status_code)
+    soup = BeautifulSoup(resp.text, "html.parser")
+    token = soup.find("input", {"name": "csrfmiddlewaretoken"})["value"]
 
-    # Cookie csrftoken wordt nu door requests.Session opgeslagen
-    soup = BeautifulSoup(r.text, "html.parser")
-    form_token = soup.find("input", {"name": "csrfmiddlewaretoken"})["value"]
-
-    # 2. Login POST met beide tokens
-    payload = {
-        "email": email,
+    # Stap 2: login POST
+    login_data = {
+        "username": email,
         "password": password,
-        "csrfmiddlewaretoken": form_token,
+        "csrfmiddlewaretoken": token,
+        "next": "/nl/reservations/"
     }
-    headers = {
-        "Referer": login_url
-    }
-    r2 = s.post(login_url, data=payload, headers=headers)
-    r2.raise_for_status()
+    headers = {"Referer": login_url}
+    login_response = s.post(login_url, data=login_data, headers=headers)
 
-    # 3. Reservering doen
+    print("Login POST status:", login_response.status_code)
+    print("Login response URL:", login_response.url)
+    print("Login response preview:", login_response.text[:400])
+
+    # Stap 3: reservering proberen
     params = {
-        "reservation_date": target_date.isoformat(),
+        "reservation_date": "2025-09-05",  # <-- later dynamisch maken!
         "reservation_block_settings": block,
         "location": location,
     }
-    r3 = s.get(reserve_url, params=params)
-    r3.raise_for_status()
+    reservation_response = s.get(reserve_url, params=params)
 
-    if "bevestigd" in r3.text.lower():
-        print("✅ Reservering gelukt!")
+    print("Reservation request status:", reservation_response.status_code)
+    print("Reservation request URL:", reservation_response.url)
+    print("Reservation response preview:", reservation_response.text[:400])
+
+    if "bevestigd" in reservation_response.text.lower():
+        print("✅ Reservering lijkt gelukt!")
     else:
         print("⚠️ Reservering mogelijk niet gelukt.")
