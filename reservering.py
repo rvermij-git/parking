@@ -45,7 +45,14 @@ with requests.Session() as s:
     print("Reservation request URL:", reservation_response.url)
     print("Reservation response preview:", reservation_response.text[:400])
 
-    if "bevestigd" in reservation_response.text.lower():
-        print("✅ Reservering lijkt gelukt!")
-    else:
-        print("⚠️ Reservering mogelijk niet gelukt.")
+    try:
+        data = reservation_response.json()
+        print("Reservation response JSON:", data)
+        msg = data.get("message", "").lower()
+        if "successful" in msg or "succesvol" in msg:
+            print("✅ Reservering gelukt!")
+        else:
+            print("⚠️ Reservering niet gelukt:", data)
+    except ValueError:
+        print("⚠️ Geen JSON response, mogelijk HTML pagina:")
+        print(reservation_response.text[:400])
